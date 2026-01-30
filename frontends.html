@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>PepperTap Delivery</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to bottom right, #fff3b0, #ffc090); /* pastel background */
+        }
+
+        .page {
+            display: none;
+            width: 100%;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+            position: relative; /* ensure buttons are clickable */
+        }
+
+        .active {
+            display: block;
+        }
+
+        h2 {
+            text-align: center;
+            color: #ff6600;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            margin: 20px auto;
+            border-radius: 12px;
+            max-width: 700px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+
+        input,
+        select {
+            padding: 8px;
+            margin-top: 5px;
+            width: 100%;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+
+        /* Old vibrant button style */
+        button {
+            padding: 15px 30px;
+            margin-top: 10px;
+            font-weight: bold;
+            font-size: 16px;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: linear-gradient(90deg, #ffcc33, #ff6600);
+            transition: 0.2s;
+            z-index: 10; /* make sure clickable */
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+            text-align: center;
+        }
+
+        th {
+            background: #ffe066;
+        }
+
+        .output {
+            background: #fff8e6;
+            padding: 15px;
+            border-radius: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+        }
+
+        .center {
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Welcome Page -->
+    <div id="welcomePage" class="page active center">
+        <h2>Welcome to PepperTap Delivery!</h2>
+        <p style="font-size:18px;">Fresh groceries delivered to your doorstep 🚀</p>
+        <button onclick="startOrdering()">Start Ordering</button>
+    </div>
+
+    <!-- Ordering Page -->
+    <div id="orderPage" class="page">
+        <h2>PepperTap Interactive Delivery</h2>
+
+        <div class="card">
+            <h3>Delivery Distance</h3>
+            <label>Distance from store (km):</label>
+            <input id="distance" type="number" value="5" min="1">
+        </div>
+
+        <div class="card">
+            <h3>Order Items</h3>
+            <table id="orderTable">
+                <tr>
+                    <th>Item</th>
+                    <th>Quantity</th>
+                    <th>Remove</th>
+                </tr>
+            </table>
+            <button onclick="addItemRow()">Add Item</button>
+        </div>
+
+        <div class="card">
+            <button onclick="handleMultiOrder()">Place Order</button>
+        </div>
+
+        <div class="card">
+            <h3>Order History & Rider Status</h3>
+            <div id="output" class="output">Welcome! Add your items to place the first order.</div>
+        </div>
+    </div>
+
+    <!-- Thank You Page -->
+    <div id="thankYouPage" class="page center">
+        <h2>🎉 Order Placed Successfully!</h2>
+        <p style="font-size:18px;">Thank you for ordering from PepperTap.</p>
+        <button onclick="goBackToOrdering()">Place Another Order</button>
+    </div>
+
+    <script>
+        // ---------- Page navigation ----------
+        function startOrdering() {
+            document.getElementById("welcomePage").classList.remove("active");
+            document.getElementById("orderPage").classList.add("active");
+        }
+
+        function goBackToOrdering() {
+            document.getElementById("thankYouPage").classList.remove("active");
+            document.getElementById("orderPage").classList.add("active");
+        }
+
+        // ---------- Data ----------
+        const stores = [
+            { id: 1, inventory_ok: 1, items: [{ name: "Milk", price: 30, stock: 10 }, { name: "Bread", price: 25, stock: 8 }, { name: "Eggs", price: 60, stock: 6 }] },
+            { id: 2, inventory_ok: 1, items: [{ name: "Milk", price: 28, stock: 5 }, { name: "Bread", price: 24, stock: 4 }, { name: "Eggs", price: 58, stock: 10 }] },
+            { id: 3, inventory_ok: 0, items: [{ name: "Milk", price: 31, stock: 7 }, { name: "Bread", price: 26, stock: 6 }, { name: "Eggs", price: 62, stock: 5 }] }
+        ];
+
+        const riders = [
+            { id: 1, available: 1, order: "" },
+            { id: 2, available: 1, order: "" },
+            { id: 3, available: 1, order: "" }
+        ];
+
+        let totalRevenue = 0, totalProfit = 0, totalOrders = 0;
+
+        function deliveryCost(d) { return 25 + 12 * d; }
+        function deliveryTime(d) { return Math.round(d * 3 + 5); }
+
+        function addItemRow() {
+            const table = document.getElementById("orderTable");
+            const row = table.insertRow();
+            const itemCell = row.insertCell(0);
+            const qtyCell = row.insertCell(1);
+            const removeCell = row.insertCell(2);
+            itemCell.innerHTML = `<select><option>Milk</option><option>Bread</option><option>Eggs</option></select>`;
+            qtyCell.innerHTML = `<input type="number" value="1" min="1">`;
+            removeCell.innerHTML = `<button onclick="this.parentElement.parentElement.remove()">Remove</button>`;
+        }
+
+        function updateRiders() {
+            let status = "\nRider Status:\n";
+            for (const r of riders) {
+                if (r.available) status += `Rider ${r.id}: 🟢 Available\n`;
+                else status += `Rider ${r.id}: 🟠 Delivering ${r.order}\n`;
+            }
+            const output = document.getElementById("output");
+            output.textContent += status;
+        }
+
+        function placeOrder(distanceKm, itemName, quantity) {
+            const output = document.getElementById("output");
+
+            let storeIndex = stores.findIndex(s => s.inventory_ok && s.items.some(i => i.name === itemName && i.stock >= quantity));
+            if (storeIndex === -1) { output.textContent += `❌ No stock for ${itemName}\n`; return; }
+
+            let riderIndex = riders.findIndex(r => r.available);
+            if (riderIndex === -1) { output.textContent += `❌ No rider available for ${itemName}\n`; return; }
+
+            let itemIndex = stores[storeIndex].items.findIndex(i => i.name === itemName);
+            let orderValue = stores[storeIndex].items[itemIndex].price * quantity;
+            let cost = deliveryCost(distanceKm);
+            let profit = orderValue - cost;
+            let eta = deliveryTime(distanceKm);
+
+            stores[storeIndex].items[itemIndex].stock -= quantity;
+            riders[riderIndex].available = 0;
+            riders[riderIndex].order = `${itemName} x${quantity}`;
+            totalRevenue += orderValue;
+            totalProfit += profit;
+            totalOrders++;
+
+            output.textContent += `🟠 Order Placed: ${itemName} x${quantity} (Rider ${riders[riderIndex].id}, ETA ${eta} mins)\n`;
+            updateRiders();
+
+            setTimeout(() => {
+                riders[riderIndex].available = 1;
+                output.textContent += `✅ Order Completed: ${itemName} x${quantity} by Rider ${riders[riderIndex].id}\n`;
+                riders[riderIndex].order = "";
+                updateRiders();
+            }, 5000);
+
+            setTimeout(() => {
+                document.getElementById("orderPage").classList.remove("active");
+                document.getElementById("thankYouPage").classList.add("active");
+            }, 500);
+        }
+
+        function handleMultiOrder() {
+            const distanceKm = parseFloat(document.getElementById("distance").value);
+            const table = document.getElementById("orderTable");
+            for (let i = 1; i < table.rows.length; i++) {
+                const row = table.rows[i];
+                const name = row.cells[0].children[0].value;
+                const qty = parseInt(row.cells[1].children[0].value);
+                placeOrder(distanceKm, name, qty);
+            }
+        }
+
+        addItemRow();
+    </script>
+
+</body>
+</html>
