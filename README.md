@@ -27,7 +27,9 @@ main.c      → Backend logic (C program)
 2. Double-click it
 3. Opens directly in browser
 
-No installation required.
+No installation required.There are two fronteneds
+the first as basic,similar to the old peppertap
+and the second a bit attractive.
 
 ---
 
