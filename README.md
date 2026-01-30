@@ -70,8 +70,8 @@ Built for hackathon to demonstrate:
 ## 👤 Author
 Team CODESTORM
 Members:
-Devika Beri
-Tia Ahuja
-Shreya Bhardwaj
+1.Devika Beri
+2.Tia Ahuja
+3.Shreya Bhardwaj
 
 
