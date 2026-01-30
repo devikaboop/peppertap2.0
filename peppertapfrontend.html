@@ -1,0 +1,341 @@
+<html>
+
+<head>
+    <title>PepperTap Clone Demo - Animated Riders</title>
+    <style>
+        body {
+            font-family: Arial;
+            margin: 0;
+            padding: 0;
+            background: #fff3e0;
+            display: flex;
+            justify-content: center;
+        }
+
+        .app {
+            max-width: 400px;
+            width: 100%;
+            background: white;
+            margin: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #ff6600;
+            color: white;
+            text-align: center;
+            padding: 20px 10px;
+            font-size: 22px;
+            font-weight: bold;
+            position: relative;
+        }
+
+        .header img {
+            width: 35px;
+            position: absolute;
+            left: 15px;
+            top: 18px;
+        }
+
+        .card {
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        label {
+            font-weight: bold;
+            display: block;
+            margin-top: 10px;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 15px;
+            background: #ff6600;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #e65c00;
+        }
+
+        .order-table {
+            width: 100%;
+            margin-top: 10px;
+            border-collapse: collapse;
+        }
+
+        .order-table th,
+        .order-table td {
+            padding: 8px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+
+        .output {
+            max-height: 150px;
+            overflow-y: auto;
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        /* Rider animation area */
+        .animation-area {
+            position: relative;
+            height: 150px;
+            background: #e0f7fa;
+            margin-top: 10px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .store {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 40px;
+            height: 40px;
+            background: #ff6600;
+            color: white;
+            text-align: center;
+            line-height: 40px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        .customer {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background: #4caf50;
+            color: white;
+            text-align: center;
+            line-height: 40px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        .rider {
+            position: absolute;
+            top: 70px;
+            left: 20px;
+            width: 30px;
+            height: 30px;
+            background: #2196f3;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            color: white;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app">
+        <div class="header">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/6/6e/Pepper_Tap_logo.png" alt="Logo">
+            PepperTap
+        </div>
+
+        <!-- Customer info -->
+        <div class="card">
+            <h3>Customer Location</h3>
+            <label>Distance from store (km)</label>
+            <input type="number" id="distance" value="2" min="0">
+        </div>
+
+        <!-- Order Items -->
+        <div class="card">
+            <h3>Order Items</h3>
+            <table class="order-table" id="orderTable">
+                <tr>
+                    <th>Item</th>
+                    <th>Qty</th>
+                    <th>Remove</th>
+                </tr>
+            </table>
+            <button onclick="addItemRow()">Add Item</button>
+        </div>
+
+        <!-- Actions -->
+        <div class="card">
+            <button onclick="handleMultiOrder()">Place Order</button>
+            <button onclick="showSummary()">Daily Summary</button>
+        </div>
+
+        <!-- Rider animation -->
+        <div class="card animation-area">
+            <div class="store">S</div>
+            <div class="customer">C</div>
+        </div>
+
+        <!-- Output -->
+        <div class="card">
+            <h3>Order History & Rider Status</h3>
+            <div class="output" id="output">Welcome! Place your first order.</div>
+        </div>
+    </div>
+
+    <script>
+        const riders = [
+            { id: 1, available: true, order: "", element: null },
+            { id: 2, available: true, order: "", element: null },
+            { id: 3, available: true, order: "", element: null }
+        ];
+
+        const storeItems = [
+            { name: "Milk", price: 30, stock: 10 },
+            { name: "Bread", price: 25, stock: 8 },
+            { name: "Eggs", price: 60, stock: 6 }
+        ];
+
+        let totalRevenue = 0, totalProfit = 0, totalOrders = 0;
+
+        function addItemRow() {
+            const table = document.getElementById("orderTable");
+            const row = table.insertRow();
+            const itemCell = row.insertCell(0);
+            const qtyCell = row.insertCell(1);
+            const removeCell = row.insertCell(2);
+
+            itemCell.innerHTML = `<select>${storeItems.map(i => `<option>${i.name}</option>`).join("")}</select>`;
+            qtyCell.innerHTML = `<input type="number" value="1" min="1">`;
+            removeCell.innerHTML = `<button onclick="this.parentElement.parentElement.remove()">Remove</button>`;
+        }
+
+        function deliveryCost(distance) {
+            return 25 + 12 * distance;
+        }
+
+        function deliveryTime(distance) {
+            return Math.round(distance * 3 + 5);
+        }
+
+        function animateRider(rider) {
+            if (!rider.element) {
+                rider.element = document.createElement("div");
+                rider.element.className = "rider";
+                rider.element.textContent = rider.id;
+                document.querySelector(".animation-area").appendChild(rider.element);
+            }
+
+            let start = 20; // left start
+            let end = 320; // right (customer)
+            rider.element.style.left = start + "px";
+
+            let steps = 60;
+            let step = 0;
+
+            const interval = setInterval(() => {
+                step++;
+                let pos = start + (end - start) * (step / steps);
+                rider.element.style.left = pos + "px";
+                if (step >= steps) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        rider.element.style.left = start + "px";
+                        rider.available = true;
+                        rider.order = "";
+                        updateRiders();
+                    }, 1000);
+                }
+            }, 50);
+        }
+
+        function placeOrder(distance, itemName, quantity) {
+            const item = storeItems.find(i => i.name === itemName && i.stock >= quantity);
+            if (!item) return `Order rejected: Not enough stock for ${itemName}.`;
+
+            const rider = riders.find(r => r.available);
+            if (!rider) return `Order rejected: No rider available for ${itemName}.`;
+
+            const orderValue = item.price * quantity;
+            const cost = deliveryCost(distance);
+            const profit = orderValue - cost;
+
+            if (orderValue < 100 || profit <= 0) return `Order rejected: ${itemName} not profitable.`;
+
+            item.stock -= quantity;
+            rider.available = false;
+            rider.order = `${itemName} x${quantity}`;
+            totalRevenue += orderValue;
+            totalProfit += profit;
+            totalOrders++;
+
+            animateRider(rider);
+
+            return `Order Confirmed:
+Item: ${itemName}
+Qty: ${quantity}
+Rider: ${rider.id}
+Delivery Cost: Rs ${cost.toFixed(2)}
+ETA: ${deliveryTime(distance)} mins
+Profit: Rs ${profit.toFixed(2)}\n`;
+        }
+
+        function handleMultiOrder() {
+            const distance = parseFloat(document.getElementById("distance").value);
+            const table = document.getElementById("orderTable");
+            const items = [];
+            for (let i = 1; i < table.rows.length; i++) {
+                const row = table.rows[i];
+                items.push({
+                    name: row.cells[0].children[0].value,
+                    qty: parseInt(row.cells[1].children[0].value)
+                });
+            }
+
+            let output = document.getElementById("output");
+            let log = "";
+            for (const itm of items) {
+                log += placeOrder(distance, itm.name, itm.qty) + "\n";
+            }
+            output.textContent += "\n" + log;
+            updateRiders();
+        }
+
+        function showSummary() {
+            const summary = `----- DAILY SUMMARY -----
+Total Orders : ${totalOrders}
+Revenue     : Rs ${totalRevenue.toFixed(2)}
+Profit      : Rs ${totalProfit.toFixed(2)}
+------------------------\n`;
+            document.getElementById("output").textContent += "\n" + summary;
+        }
+
+        function updateRiders() {
+            let status = "\nRider Status:\n";
+            for (const r of riders) {
+                status += `Rider ${r.id}: ${r.available ? "Available" : "Delivering " + r.order}\n`;
+            }
+            document.getElementById("output").textContent += status;
+        }
+
+        addItemRow();
+    </script>
+
+</body>
+</html>
